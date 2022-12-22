@@ -343,6 +343,13 @@ class PipePredictor(object):
 
         self.pushurl = args.pushurl
 
+        if 'spatial_downsample' in self.cfg:
+            self.spatial_downsample = self.cfg['spatial_downsample']
+            assert self.spatial_downsample > 0
+        else:
+            self.spatial_downsample = 1
+
+
         # auto download inference model
         get_model_dir(self.cfg)
 
@@ -651,6 +658,10 @@ class PipePredictor(object):
                 print('Thread: {}; frame id: {}'.format(thread_idx, frame_id))
 
             ret, frame = capture.read()
+            if abs(self.spatial_downsample-1) > 1e-4:
+                h, w = frame.shape[:-1]
+                h,w = int(h/self.spatial_downsample), int(w/self.spatial_downsample)
+                cv2.resize(frame, (h,w))
             if not ret:
                 break
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
