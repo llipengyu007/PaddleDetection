@@ -585,8 +585,8 @@ class PipePredictor(object):
         capture = cv2.VideoCapture(video_file)
 
         # Get Video info : resolution, fps, frame count
-        width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH) / self.spatial_downsample)
+        height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT) / self.spatial_downsample)
         fps = int(capture.get(cv2.CAP_PROP_FPS))
         frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
         print("video fps: %d, frame_count: %d" % (fps, frame_count))
@@ -658,13 +658,13 @@ class PipePredictor(object):
                 print('Thread: {}; frame id: {}'.format(thread_idx, frame_id))
 
             ret, frame = capture.read()
-            if abs(self.spatial_downsample-1) > 1e-4:
-                h, w = frame.shape[:-1]
-                h,w = int(h/self.spatial_downsample), int(w/self.spatial_downsample)
-                cv2.resize(frame, (h,w))
             if not ret:
                 break
+            if abs(self.spatial_downsample-1) > 1e-4:
+                frame = cv2.resize(frame, (width,height))
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+
             if frame_id > self.warmup_frame:
                 self.pipe_timer.total_time.start()
 
@@ -1112,3 +1112,4 @@ if __name__ == '__main__':
                             ], "device should be CPU, GPU or XPU"
 
     main()
+
