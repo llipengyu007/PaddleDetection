@@ -39,7 +39,7 @@ from mot.visualize import plot_tracking, plot_tracking_dict
 from mot.mtmct.utils import parse_bias
 from mot.mtmct.postprocess import trajectory_fusion, sub_cluster, gen_res, print_mtmct_result
 from mot.mtmct.postprocess import get_mtmct_matching_results, save_mtmct_crops, save_mtmct_vis_results
-
+from deploy.pipeline.download import auto_download_model
 
 class SDE_Detector(Detector):
     """
@@ -136,15 +136,26 @@ class SDE_Detector(Detector):
         self.num_classes = len(self.pred_config.labels)
         if self.skip_frame_num > 1:
             self.previous_det_result = None
+        assert tracker_config is not None, 'Note that tracker_config should be set.'
+        self.tracker_config = tracker_config
+        tracker_cfg = yaml.safe_load(open(self.tracker_config))
+        cfg = tracker_cfg[tracker_cfg['type']]
+
 
         # reid config
+        if reid_model_dir is None and 'REID' in tracker_cfg:
+            reid_model_dir = tracker_cfg['REID']['reid_model_dir']
+            downloaded_model_dir = auto_download_model(reid_model_dir)
+            if downloaded_model_dir:
+                reid_model_dir = downloaded_model_dir
+            print("reid in training downloading, model dir: ", reid_model_dir)
         self.use_reid = False if reid_model_dir is None else True
         if self.use_reid:
             self.reid_pred_config = self.set_config(reid_model_dir)
             self.reid_predictor, self.config = load_predictor(
                 reid_model_dir,
                 run_mode=run_mode,
-                batch_size=50,  # reid_batch_size
+                batch_size=tracker_cfg['REID']['batch_size'],  # reid_batch_size
                 min_subgraph_size=self.reid_pred_config.min_subgraph_size,
                 device=device,
                 use_dynamic_shape=self.reid_pred_config.use_dynamic_shape,
@@ -154,14 +165,12 @@ class SDE_Detector(Detector):
                 trt_calib_mode=trt_calib_mode,
                 cpu_threads=cpu_threads,
                 enable_mkldnn=enable_mkldnn)
+            self.topk = tracker_cfg['REID']['topk']
         else:
             self.reid_pred_config = None
             self.reid_predictor = None
 
-        assert tracker_config is not None, 'Note that tracker_config should be set.'
-        self.tracker_config = tracker_config
-        tracker_cfg = yaml.safe_load(open(self.tracker_config))
-        cfg = tracker_cfg[tracker_cfg['type']]
+
 
         # tracker config
         self.use_deepsort_tracker = True if tracker_cfg[
@@ -263,14 +272,15 @@ class SDE_Detector(Detector):
         crops = get_crops(pred_xyxys, ori_image, w, h)
 
         # to keep fast speed, only use topk crops
-        crops = crops[:50]  # reid_batch_size
+        crops = crops[:self.topk]  # reid_batch_size
         det_results['crops'] = np.array(crops).astype('float32')
-        det_results['boxes'] = pred_dets[:50]
+        det_results['boxes'] = pred_dets[:self.topk]
 
         input_names = self.reid_predictor.get_input_names()
         for i in range(len(input_names)):
             input_tensor = self.reid_predictor.get_input_handle(input_names[i])
-            input_tensor.copy_from_cpu(det_results[input_names[i]])
+            #input_tensor.copy_from_cpu(det_results[input_names[i]])
+            input_tensor.copy_from_cpu(det_results['crops'])
 
         # model prediction
         for i in range(repeats):
