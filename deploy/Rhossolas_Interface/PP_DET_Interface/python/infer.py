@@ -336,7 +336,6 @@ class Detector(object):
                     threshold=self.threshold)
 
             results.append(merged_results)
-            print('Test iter {}'.format(i))
 
         results = self.merge_batch_result(results)
         if save_results:
@@ -406,7 +405,6 @@ class Detector(object):
                         output_dir=self.output_dir,
                         threshold=self.threshold)
             results.append(result)
-            print('Test iter {}'.format(i))
         results = self.merge_batch_result(results)
         if save_results:
             Path(self.output_dir).mkdir(exist_ok=True)

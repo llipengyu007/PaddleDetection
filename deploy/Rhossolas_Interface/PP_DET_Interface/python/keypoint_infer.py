@@ -235,8 +235,6 @@ class KeyPointDetector(Detector):
                         save_dir=self.output_dir)
 
             results.append(result)
-            if visual:
-                print('Test iter {}'.format(i))
         results = self.merge_batch_result(results)
         return results
 
