@@ -6,21 +6,16 @@ import time
 import paddle
 import sys
 
-# add deploy path of PadleDetection to sys.path
+# add deploy path of PaddleDetection to sys.path
 parent_path = os.path.abspath(os.path.join(__file__, *(['..'] * 2)))
+print(parent_path)
+exit(0)
 sys.path.insert(0, parent_path)
 
 
 from cfg_utils import argsparser, print_arguments, merge_cfg
+from python.infer import Detector
 
-from python.keypoint_infer import KeyPointDetector
-
-from python.preprocess import decode_image, ShortSizeScale
-
-
-from pipeline.pipeline import Pipeline
-
-'''
 
 def decode_image(im_file, im_info):
     """read rgb image
@@ -42,7 +37,6 @@ def decode_image(im_file, im_info):
     im_info['im_shape'] = np.array(im.shape[:2], dtype=np.float32)
     im_info['scale_factor'] = np.array([1., 1.], dtype=np.float32)
     return im, im_info
-'''
 
 if __name__ == '__main__':
     paddle.enable_static()
@@ -57,27 +51,37 @@ if __name__ == '__main__':
     cfg = merge_cfg(FLAGS)
     print_arguments(cfg)
 
-    infer_worker = Pipeline(FLAGS, cfg)
-
     image = '/Users/lipengyu/Downloads/bad_case/tmp/3e28e4af45765b0001d7a817.png'
-    image = [decode_image(image, {})[0] ]
-
-    start = time.time()
     repeat = 1
 
+
+
+    model_dir = '/Users/lipengyu/.cache/paddle/infer_weights/mot_ppyoloe_l_36e_pipeline'
+    batch_size = 1
+    crop_thresh = 0.5
+    det_predictor = Detector(
+        model_dir, FLAGS.device, FLAGS.run_mode, batch_size,
+        FLAGS.trt_min_shape, FLAGS.trt_max_shape, FLAGS.trt_opt_shape,
+        FLAGS.trt_calib_mode, FLAGS.cpu_threads, FLAGS.enable_mkldnn)
+
+    start = time.time()
+
+    image = [decode_image(image, {})[0]]
     for i in range(repeat):
-        det_res = infer_worker.predictor.det_predictor.predict_image(image, visual=False)
-        det_res = infer_worker.predictor.det_predictor.filter_box(det_res,
-                                                infer_worker.predictor.cfg['crop_thresh'])
+        det_res = det_predictor.predict_image(image, visual=False)
+        det_res = det_predictor.filter_box(det_res,
+                                        crop_thresh)
     end = time.time()
-    print('lipengyu cost:{}'.format((end-start) / repeat))
+    print('lipengyu cost:{}'.format((end - start) / repeat))
 
     bboxes_num = det_res['boxes_num']
-    bboxes = det_res['boxes']# clsid, confidence, xmin, ymin, xmax, ymax
+    bboxes = det_res['boxes']  # clsid, confidence, xmin, ymin, xmax, ymax
 
     assert len(bboxes) == bboxes_num
     for bbox in bboxes:
         print('class_id:{:d}, confidence:{:.4f}, left_top:[{:.2f},{:.2f}],'
               'right_bottom:[{:.2f},{:.2f}]'.format(
             int(bbox[0]), bbox[1], bbox[2], bbox[3], bbox[4], bbox[5]))
+
+
     print('complete')
