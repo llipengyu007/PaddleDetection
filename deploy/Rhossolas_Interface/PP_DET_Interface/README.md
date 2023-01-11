@@ -38,3 +38,6 @@
   - run_mode=trt_fp32: 17.4ms
   - run_mode=trt_fp16: 12.4ms
   - run_mode=trt_int8: 12.9ms
+
+# 注意事项
+- 本代码中的detector类会使用类似于handler一类的东西将input图片缓存进去，然后在用缓存的东西进行前向。所以当多路并发而公用一个detector的对象的时候会存在input串流的情况。如果要多路并发，建议每一路单独建立一个detector或者通过batch size进行分发

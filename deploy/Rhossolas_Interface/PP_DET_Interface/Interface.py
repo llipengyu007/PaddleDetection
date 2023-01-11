@@ -20,11 +20,16 @@ from Interface_utils import argsparser
 from python.infer import Detector
 
 
-
-
 if __name__ == '__main__':
+    tag = {}
+    tag[1] = 3
+    tag[2] = 4
+    while 1 in tag:
+        print(1)
 
-    image = '/Users/lipengyu/Downloads/bad_case/tmp/3e28e4af45765b0001d7a817.png'
+if __name__ == '__main__111':
+
+    image = '/Users/lipengyu/Downloads/bad_case/img4/2_8.png'
     repeat = 1
 
 
