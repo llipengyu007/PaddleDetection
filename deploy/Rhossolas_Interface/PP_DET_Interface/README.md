@@ -40,4 +40,8 @@
   - run_mode=trt_int8: 12.9ms
 
 # 注意事项
-- 本代码中的detector类会使用类似于handler一类的东西将input图片缓存进去，然后在用缓存的东西进行前向。所以当多路并发而公用一个detector的对象的时候会存在input串流的情况。如果要多路并发，建议每一路单独建立一个detector或者通过batch size进行分发
+- 本代码中的detector类会使用类似于handler一类的东西将input图片缓存进去，然后在用缓存的东西进行前向。所以当多路并发而公用一个detector的对象的时候会存在input串流的情况。如果要多路并发，建议每一路单独建立一个detector或者通过batch size进行分发。
+- 在新建detector的如果直接init比较慢，可以考虑使用paddle.clone(XXXX)的形式
+
+# 跟新说明
+- 新增代码支持对于Detector类的deepcopy过程。但是要求paddlepaddle版本大于2.4.0

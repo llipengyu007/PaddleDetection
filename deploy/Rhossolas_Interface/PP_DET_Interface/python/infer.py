@@ -100,27 +100,51 @@ class Detector(object):
                  output_dir='output',
                  threshold=0.5,
                  delete_shuffle_pass=False):
-        self.pred_config = self.set_config(model_dir)
-        self.predictor, self.config = load_predictor(
-            model_dir,
-            run_mode=run_mode,
-            batch_size=batch_size,
-            min_subgraph_size=self.pred_config.min_subgraph_size,
-            device=device,
-            use_dynamic_shape=self.pred_config.use_dynamic_shape,
-            trt_min_shape=trt_min_shape,
-            trt_max_shape=trt_max_shape,
-            trt_opt_shape=trt_opt_shape,
-            trt_calib_mode=trt_calib_mode,
-            cpu_threads=cpu_threads,
-            enable_mkldnn=enable_mkldnn,
-            enable_mkldnn_bfloat16=enable_mkldnn_bfloat16,
-            delete_shuffle_pass=delete_shuffle_pass)
-        self.det_times = Timer()
-        self.cpu_mem, self.gpu_mem, self.gpu_util = 0, 0, 0
-        self.batch_size = batch_size
-        self.output_dir = output_dir
-        self.threshold = threshold
+        if model_dir is None:
+            self.pred_config = None
+            self.predictor, self.config = None, None
+            self.det_times = Timer()
+            self.cpu_mem, self.gpu_mem, self.gpu_util = 0, 0, 0
+            self.batch_size = None
+            self.output_dir = None
+            self.threshold = None
+        else:
+            self.pred_config = self.set_config(model_dir)
+            self.predictor, self.config = load_predictor(
+                model_dir,
+                run_mode=run_mode,
+                batch_size=batch_size,
+                min_subgraph_size=self.pred_config.min_subgraph_size,
+                device=device,
+                use_dynamic_shape=self.pred_config.use_dynamic_shape,
+                trt_min_shape=trt_min_shape,
+                trt_max_shape=trt_max_shape,
+                trt_opt_shape=trt_opt_shape,
+                trt_calib_mode=trt_calib_mode,
+                cpu_threads=cpu_threads,
+                enable_mkldnn=enable_mkldnn,
+                enable_mkldnn_bfloat16=enable_mkldnn_bfloat16,
+                delete_shuffle_pass=delete_shuffle_pass)
+            self.det_times = Timer()
+            self.cpu_mem, self.gpu_mem, self.gpu_util = 0, 0, 0
+            self.batch_size = batch_size
+            self.output_dir = output_dir
+            self.threshold = threshold
+
+    def clone(self):
+        ret = Detector(None)
+
+        ret.pred_config = self.pred_config
+        ret.predictor, ret.config = paddle.clone(self.predictor), self.config
+        ret.det_times = Timer()
+        ret.cpu_mem, ret.gpu_mem, ret.gpu_util = \
+            self.cpu_mem, self.gpu_mem, self.gpu_util
+        ret.batch_size = self.batch_size
+        ret.output_dir = self.output_dir
+        ret.threshold = self.threshold
+
+        return ret
+
 
     def set_config(self, model_dir):
         return PredictConfig(model_dir)
