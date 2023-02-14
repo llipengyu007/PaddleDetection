@@ -584,18 +584,7 @@ class PipePredictor(object):
                                                                      , axis=0)
                         kpt_res_list['bbox'] = np.concatenate((kpt_res_list['bbox'], ori_bboxes_per_img)
                                                                , axis=0)
-                    '''
-                    
-                    kpt_res_per_img = {}
-                    
-                    kpt_res_per_img['keypoint'] = [
-                        keypoint_vector.tolist(), score_vector.tolist()
-                    ] if len(keypoint_vector) > 0 else [[], []]
-                    kpt_res_per_img['bbox'] = ori_bboxes_per_img
-                    kpt_res_list['keypoint'].extend(kpt_res_per_img['keypoint'])
-                    kpt_res_list['bbox'].extend()
-                    '''
-
+                        
                 if i > self.warmup_frame:
                     self.pipe_timer.module_time['kpt'].end()
 
