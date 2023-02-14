@@ -1,29 +1,14 @@
-import os
-
 import time
 import paddle
-import sys
 
-from Interface_utils import decode_image
-
-'''
-# add deploy path of PaddleDetection to sys.path
-parent_path = os.path.abspath(os.path.join(__file__, *(['..'] * 3)))
-print(parent_path)
-sys.path.insert(0, parent_path)
-parent_path = os.path.join(parent_path, 'pipeline')
-print(parent_path)
-sys.path.insert(0, parent_path)
-'''
-
-from Interface_utils import argsparser
+from PP_DET_Interface.Interface_utils import argsparser, decode_image
 from python.infer import Detector
 
 
 if __name__ == '__main__':
 
     print(paddle.__version__)
-    image = '/Users/lipengyu/Downloads/bad_case/img/截屏2023-01-11 18.16.25.png'
+    image = '/Users/lipengyu/Downloads/bad_case/tmp_2/42632f59dac8730001b940a8.png'
     # image = './test_img/Image_20221229141402.png'
     # image_deepcopy = './test_img/3e28e4af45765b0001d7a817.png'
     repeat = 1

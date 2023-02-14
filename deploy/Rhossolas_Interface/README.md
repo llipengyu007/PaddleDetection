@@ -1,8 +1,9 @@
 # 文件说明
 
-- Interface.py：检测的接口，里面实现了main函数，可以参考阅读。整体接口十分简单，容易封装
-- Interface_utils.py: 一些简单的依赖额外函数。主要为：1. 清晰展示读图过程的decode_image函数；2. 配置默认参数的函数
-- python文件夹；依赖包。需要导入，但是可以不看不关注。里面可能存在一些融于项没有删除，暂时不做处理
+- PP_DET_Interface: 主要针对PaddlePaddle的人类检测开发，应该对车辆等其他检测也是可以通过更换模型和配置文件更新（暂未测试）
+  - Interface_utils.py: 一些简单的依赖额外函数。主要为：1. 清晰展示读图过程的decode_image函数；2. 配置默认参数的函数
+- python文件夹:依赖包。需要导入，但是可以不看不关注。里面可能存在一些融于项没有删除，暂时不做处理
+- PP_DET_Interface.py 和 PP_DET_Interface_video.py：检测的接口，里面实现了main函数，可以参考阅读。整体接口十分简单，容易封装。一个是针对图片，另一个是视频
 
 
 # 这个接口需要依赖PaddlePaddle的相关组件，请参考如下链接安装：
@@ -25,7 +26,8 @@
 - 建议在满足速度的情况下，尽可能使用更高的精度
 - 使用tensorrt的缺点为初始化的时候会比较慢
 
-# 效率测试 
+# 效率测试
+  ## PP_DET_Interface模型的效率测试 
 - 同一张图片测试1000次，模型为 [mot_ppyoloe_l_36e_pipeline][https://bj.bcebos.com/v1/paddledet/models/pipeline/mot_ppyoloe_l_36e_pipeline.zip]
 - 测试环境
   - PaddlePaddle：2.4.1
@@ -44,4 +46,5 @@
 - 在新建detector的如果直接init比较慢，可以考虑使用paddle.clone(XXXX)的形式
 
 # 跟新说明
+- 20230214： 重新组织文件格式，将python文件包放到接口依赖包外面
 - 新增代码支持对于Detector类的deepcopy过程。但是要求paddlepaddle版本大于2.4.0

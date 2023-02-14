@@ -2,13 +2,11 @@ import os
 
 import time
 import paddle
-import sys
 
-from Interface_utils import decode_image
 
 import cv2
-from Interface_utils import argsparser
-from python.infer import Detector
+from PP_DET_Interface.Interface_utils import argsparser, decode_image
+from deploy.Rhossolas_Interface.python.infer import Detector
 
 if __name__ == '__main__':
     video = '/Users/lipengyu/Downloads/bad_case/tmp/video/1.avi'
