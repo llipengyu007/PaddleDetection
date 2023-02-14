@@ -18,6 +18,7 @@ MOT:
 KPT:
   model_dir: https://bj.bcebos.com/v1/paddledet/models/pipeline/dark_hrnet_w32_256x192.zip
   batch_size: 8
+  enable: True
 
 ATTR:
   model_dir:  https://bj.bcebos.com/v1/paddledet/models/pipeline/PPLCNet_x1_0_person_attribute_945_infer.zip

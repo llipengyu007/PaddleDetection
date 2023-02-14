@@ -279,6 +279,12 @@ class PipePredictor(object):
         self.with_mtmct = cfg.get('REID', False)['enable'] if cfg.get(
             'REID', False) else False
 
+        self.with_kpt_predictor = cfg.get('KPT', False)['enable'] if cfg.get(
+            'KPT', False) else False
+
+        if self.with_kpt_predictor:
+            print('Skeleton Key Points enabled')
+
         if self.with_skeleton_action:
             print('SkeletonAction Recognition enabled')
         if self.with_video_action:
@@ -302,6 +308,7 @@ class PipePredictor(object):
                                                         False) else False
         if self.with_vehicle_attr:
             print('Vehicle Attribute Recognition enabled')
+
 
         self.modebase = {
             "framebased": False,
@@ -373,6 +380,28 @@ class PipePredictor(object):
                 model_dir, args.device, args.run_mode, batch_size,
                 args.trt_min_shape, args.trt_max_shape, args.trt_opt_shape,
                 args.trt_calib_mode, args.cpu_threads, args.enable_mkldnn)
+
+
+
+
+
+            if self.with_kpt_predictor:
+                kpt_cfg = self.cfg['KPT']
+                kpt_model_dir = kpt_cfg['model_dir']
+                kpt_batch_size = kpt_cfg['batch_size']
+                self.kpt_predictor = KeyPointDetector(
+                    kpt_model_dir,
+                    args.device,
+                    args.run_mode,
+                    kpt_batch_size,
+                    args.trt_min_shape,
+                    args.trt_max_shape,
+                    args.trt_opt_shape,
+                    args.trt_calib_mode,
+                    args.cpu_threads,
+                    args.enable_mkldnn,
+                    use_dark=False)
+
         else:
             if self.with_idbased_detaction:
                 idbased_detaction_cfg = self.cfg['ID_BASED_DETACTION']
@@ -514,10 +543,12 @@ class PipePredictor(object):
                 self.pipe_timer.track_num += len(det_res['boxes'])
             self.pipeline_res.update(det_res, 'det')
 
-            if self.with_human_attr:
-                crop_inputs = crop_image_with_det(batch_input, det_res)
-                attr_res_list = []
+            if self.with_human_attr or self.with_kpt_predictor:
+                crop_inputs, new_bboxes, ori_bboxes = crop_image_with_det(batch_input, det_res)
 
+
+            if self.with_human_attr:
+                attr_res_list = []
                 if i > self.warmup_frame:
                     self.pipe_timer.module_time['attr'].start()
 
@@ -531,6 +562,48 @@ class PipePredictor(object):
 
                 attr_res = {'output': attr_res_list}
                 self.pipeline_res.update(attr_res, 'attr')
+
+            if self.with_kpt_predictor:
+                kpt_res_list = {'keypoint':[], 'bbox':[]}
+                if i > self.warmup_frame:
+                    self.pipe_timer.module_time['kpt'].start()
+
+                for crop_input,new_bboxes_per_img, ori_bboxes_per_img in zip(crop_inputs, new_bboxes, ori_bboxes):
+                    kpt_pred = self.kpt_predictor.predict_image(
+                        crop_input, visual=False)
+                    keypoint_vector, score_vector = translate_to_ori_images(
+                        kpt_pred, np.array(new_bboxes_per_img))
+
+                    if len(kpt_res_list['keypoint']) == 0:
+                        kpt_res_list['keypoint'] = [keypoint_vector, score_vector]
+                        kpt_res_list['bbox'] = np.array(ori_bboxes_per_img)
+                    else:
+                        kpt_res_list['keypoint'][0] = np.concatenate((kpt_res_list['keypoint'][0], keypoint_vector)
+                                                                  , axis=0)
+                        kpt_res_list['keypoint'][1] = np.concatenate((kpt_res_list['keypoint'][1], score_vector)
+                                                                     , axis=0)
+                        kpt_res_list['bbox'] = np.concatenate((kpt_res_list['bbox'], ori_bboxes_per_img)
+                                                               , axis=0)
+                    '''
+                    
+                    kpt_res_per_img = {}
+                    
+                    kpt_res_per_img['keypoint'] = [
+                        keypoint_vector.tolist(), score_vector.tolist()
+                    ] if len(keypoint_vector) > 0 else [[], []]
+                    kpt_res_per_img['bbox'] = ori_bboxes_per_img
+                    kpt_res_list['keypoint'].extend(kpt_res_per_img['keypoint'])
+                    kpt_res_list['bbox'].extend()
+                    '''
+
+                if i > self.warmup_frame:
+                    self.pipe_timer.module_time['kpt'].end()
+
+                #kpt_res = {'keypoint': kpt_res_list['keypoint'], 'bbox': kpt_res_list['bbox']}
+                self.pipeline_res.update(kpt_res_list, 'kpt')
+
+
+
 
             if self.with_vehicle_attr:
                 crop_inputs = crop_image_with_det(batch_input, det_res)
@@ -1044,6 +1117,9 @@ class PipePredictor(object):
         human_attr_res = result.get('attr')
         vehicle_attr_res = result.get('vehicle_attr')
         vehicleplate_res = result.get('vehicleplate')
+        kpt_res = result.get('kpt')
+
+
 
         for i, (im_file, im) in enumerate(zip(im_files, images)):
             if det_res is not None:
@@ -1058,10 +1134,25 @@ class PipePredictor(object):
                     threshold=self.cfg['crop_thresh'])
                 im = np.ascontiguousarray(np.copy(im))
                 im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
+
+
             if human_attr_res is not None:
                 human_attr_res_i = human_attr_res['output'][start_idx:start_idx
                                                             + boxes_num_i]
                 im = visualize_attr(im, human_attr_res_i, det_res_i['boxes'])
+            if kpt_res is not None:
+                kpt_res_i = {}
+                kpt_res_i['keypoint'] = [ kpt_res['keypoint'][0][start_idx:start_idx + boxes_num_i, :, :],
+                                          kpt_res['keypoint'][1][start_idx:start_idx + boxes_num_i, :]
+                                        ]
+                kpt_res_i['bbox'] = kpt_res['bbox'][start_idx:start_idx + boxes_num_i, :]
+
+                im = visualize_pose(
+                    im,
+                    kpt_res_i,
+                    visual_thresh=self.cfg['kpt_thresh'],
+                    returnimg=True)
+
             if vehicle_attr_res is not None:
                 vehicle_attr_res_i = vehicle_attr_res['output'][
                     start_idx:start_idx + boxes_num_i]

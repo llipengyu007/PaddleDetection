@@ -23,9 +23,9 @@ from python.infer import Detector
 if __name__ == '__main__':
 
     print(paddle.__version__)
-    # image = '/Users/lipengyu/Downloads/bad_case/img4/2_8.png'
-    image = './test_img/Image_20221229141402.png'
-    image_deepcopy = './test_img/3e28e4af45765b0001d7a817.png'
+    image = '/Users/lipengyu/Downloads/bad_case/img/截屏2023-01-11 18.16.25.png'
+    # image = './test_img/Image_20221229141402.png'
+    # image_deepcopy = './test_img/3e28e4af45765b0001d7a817.png'
     repeat = 1
 
 
@@ -35,12 +35,12 @@ if __name__ == '__main__':
     parser = argsparser()
     FLAGS = parser.parse_args()
     FLAGS.device = FLAGS.device.upper()
-    FLAGS.device = 'GPU'
-    FLAGS.run_mode = 'trt_fp16'
+    FLAGS.device = 'CPU'
+    #FLAGS.run_mode = 'trt_fp16'
     assert FLAGS.device in ['CPU', 'GPU', 'XPU'
                             ], "device should be CPU, GPU or XPU"
-    #model_dir = '/Users/lipengyu/.cache/paddle/infer_weights/mot_ppyoloe_l_36e_pipeline'
-    model_dir = './mot_ppyoloe_l_36e_pipeline'
+    model_dir = '/Users/lipengyu/.cache/paddle/infer_weights/mot_ppyoloe_l_36e_pipeline'
+    #model_dir = './mot_ppyoloe_l_36e_pipeline'
     print('FLAGS.device is {}'.format(FLAGS.device))
     print('FLAGS.run_mode is {}'.format(FLAGS.run_mode))
 
