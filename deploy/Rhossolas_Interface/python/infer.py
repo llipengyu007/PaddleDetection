@@ -372,7 +372,7 @@ class Detector(object):
                       image_list,
                       run_benchmark=False,
                       repeats=1,
-                      visual=True,
+                      visual=False,
                       save_results=False):
         batch_loop_cnt = math.ceil(float(len(image_list)) / self.batch_size)
         results = []

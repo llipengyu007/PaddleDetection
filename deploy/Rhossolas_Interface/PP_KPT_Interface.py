@@ -7,7 +7,6 @@ from PP_KPT_Interface.Interface_utils import crop_image_with_det, visualize_imag
 
 from python.infer import Detector
 from python.keypoint_infer import KeyPointDetector
-from python.keypoint_postprocess import translate_to_ori_images
 
 if __name__ == '__main__':
 
@@ -84,31 +83,12 @@ if __name__ == '__main__':
             # image Croping
             crop_inputs, new_bboxes, ori_bboxes = crop_image_with_det(image, det_res)
 
-            # Achieve KPT per bbox
-            kpt_res = {'keypoint': [], 'bbox': []}
-            for crop_input, new_bboxes_per_img, ori_bboxes_per_img in zip(crop_inputs, new_bboxes, ori_bboxes):
-                # KPT model infernece
-                kpt_pred = kpt_predictor.predict_image(
-                    crop_input, visual=False)
-                # postprocess, remapping the location from cropping image to original image
-                keypoint_vector, score_vector = translate_to_ori_images(
-                    kpt_pred, np.array(new_bboxes_per_img))
+            kpt_res = kpt_predictor.predict_batch_image(crop_inputs, new_bboxes, ori_bboxes, visual=False) #visualize is not support in this interface
 
-                # postprocess, rearrange result
-                if len(kpt_res['keypoint']) == 0:
-                    kpt_res['keypoint'] = [keypoint_vector, score_vector]
-                    kpt_res['bbox'] = np.array(ori_bboxes_per_img)
-                else:
-                    kpt_res['keypoint'][0] = np.concatenate((kpt_res['keypoint'][0], keypoint_vector)
-                                                                 , axis=0)
-                    kpt_res['keypoint'][1] = np.concatenate((kpt_res['keypoint'][1], score_vector)
-                                                                 , axis=0)
-                    kpt_res['bbox'] = np.concatenate((kpt_res['bbox'], ori_bboxes_per_img)
-                                                          , axis=0)
 
-                if visualize:
-                    visualize_image([image_path], image, output_dir, det_res, kpt_res)
-                    # visualize_image(image_path_list, image, output_dir, det_res, kpt_res) # example coe for batch is more than 1
+            if visualize:
+                visualize_image([image_path], image, output_dir, det_res, kpt_res)
+                # visualize_image(image_path_list, image, output_dir, det_res, kpt_res) # example coe for batch is more than 1
 
 
 

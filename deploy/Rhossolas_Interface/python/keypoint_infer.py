@@ -31,13 +31,15 @@ sys.path.insert(0, parent_path)
 
 from preprocess import preprocess, NormalizeImage, Permute
 from keypoint_preprocess import EvalAffine, TopDownEvalAffine, expand_crop
-from keypoint_postprocess import HrHRNetPostProcess, HRNetPostProcess
+from keypoint_postprocess import HrHRNetPostProcess, HRNetPostProcess, translate_to_ori_images
 from visualize import visualize_pose
 from paddle.inference import Config
 from paddle.inference import create_predictor
 from utils import argsparser, Timer, get_current_memory_mb
 from benchmark_utils import PaddleInferBenchmark
 from infer import Detector, get_test_images, print_arguments
+
+
 
 # Global dictionary
 KEYPOINT_SUPPORT_MODELS = {
@@ -172,11 +174,40 @@ class KeyPointDetector(Detector):
         result = dict(heatmap=np_heatmap, masks=np_masks)
         return result
 
+    def predict_batch_image(self,
+                      crop_inputs, new_bboxes, ori_bboxes,
+                      run_benchmark=False,
+                      repeats=1,
+                      visual=False):
+
+        # Achieve KPT per bbox
+        kpt_res = {'keypoint': [], 'bbox': []}
+        for crop_input, new_bboxes_per_img, ori_bboxes_per_img in zip(crop_inputs, new_bboxes, ori_bboxes):
+            # KPT model infernece
+            kpt_pred = self.predict_image(
+                crop_input, run_benchmark, repeats, visual)
+            # postprocess, remapping the location from cropping image to original image
+            keypoint_vector, score_vector = translate_to_ori_images(
+                kpt_pred, np.array(new_bboxes_per_img))
+
+            # postprocess, rearrange result
+            if len(kpt_res['keypoint']) == 0:
+                kpt_res['keypoint'] = [keypoint_vector, score_vector]
+                kpt_res['bbox'] = np.array(ori_bboxes_per_img)
+            else:
+                kpt_res['keypoint'][0] = np.concatenate((kpt_res['keypoint'][0], keypoint_vector)
+                                                        , axis=0)
+                kpt_res['keypoint'][1] = np.concatenate((kpt_res['keypoint'][1], score_vector)
+                                                        , axis=0)
+                kpt_res['bbox'] = np.concatenate((kpt_res['bbox'], ori_bboxes_per_img)
+                                                 , axis=0)
+        return kpt_res
+
     def predict_image(self,
                       image_list,
                       run_benchmark=False,
                       repeats=1,
-                      visual=True):
+                      visual=False):
         results = []
         batch_loop_cnt = math.ceil(float(len(image_list)) / self.batch_size)
         for i in range(batch_loop_cnt):
