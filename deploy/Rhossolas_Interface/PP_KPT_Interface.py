@@ -61,6 +61,7 @@ if __name__ == '__main__':
         FLAGS.cpu_threads,
         FLAGS.enable_mkldnn,
         use_dark=False)
+    #kpt_predictor = paddle.clone(kpt_predictor) # deepcopy support
 
     # standard process start
 
@@ -92,20 +93,7 @@ if __name__ == '__main__':
 
 
 
-    '''
 
-    end = time.time()
-    print('lipengyu cost:{}'.format((end - start) / repeat))
-
-    bboxes_num = det_res['boxes_num']
-    bboxes = det_res['boxes']  # clsid, confidence, xmin, ymin, xmax, ymax
-    assert len(bboxes) == bboxes_num
-    for bbox in bboxes:
-        print('class_id:{:d}, confidence:{:.4f}, left_top:[{:.2f},{:.2f}],'
-              'right_bottom:[{:.2f},{:.2f}]'.format(
-            int(bbox[0]), bbox[1], bbox[2], bbox[3], bbox[4], bbox[5]))
-    # standard process end
-    '''
 
 
 

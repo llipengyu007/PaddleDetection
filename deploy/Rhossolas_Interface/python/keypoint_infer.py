@@ -93,7 +93,21 @@ class KeyPointDetector(Detector):
             output_dir=output_dir,
             threshold=threshold, )
         self.use_dark = use_dark
+    def clone(self):
+        ret = KeyPointDetector(None)
 
+        ret.pred_config = self.pred_config
+        ret.predictor, ret.config = paddle.clone(self.predictor), self.config
+        ret.det_times = Timer()
+        ret.cpu_mem, ret.gpu_mem, ret.gpu_util = \
+            self.cpu_mem, self.gpu_mem, self.gpu_util
+        ret.batch_size = self.batch_size
+        ret.output_dir = self.output_dir
+        ret.threshold = self.threshold
+
+        ret.use_dark =self.use_dark
+
+        return ret
     def set_config(self, model_dir):
         return PredictConfig_KeyPoint(model_dir)
 
