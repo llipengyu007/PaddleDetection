@@ -1,9 +1,9 @@
 import time
 import paddle
-import numpy as np
 
-from PP_DET_Interface.Interface_utils import argsparser, decode_image
-from PP_KPT_Interface.Interface_utils import crop_image_with_det, visualize_image
+from Interface_utils import argsparser, decode_image
+from Interface_utils import crop_image_with_det, visualize_image
+
 
 from python.infer import Detector
 from python.keypoint_infer import KeyPointDetector

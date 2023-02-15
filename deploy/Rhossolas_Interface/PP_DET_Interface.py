@@ -1,7 +1,7 @@
 import time
 import paddle
 
-from PP_DET_Interface.Interface_utils import argsparser, decode_image
+from Interface_utils import argsparser, decode_image
 from python.infer import Detector
 
 

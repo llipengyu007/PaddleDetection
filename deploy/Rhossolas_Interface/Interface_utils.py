@@ -1,9 +1,15 @@
+from python.keypoint_preprocess import expand_crop
+from python.visualize import visualize_pose
+# from python.preprocess import decode_image
+
+import os
 
 import cv2
 import numpy as np
 import yaml
 import ast
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
+
 
 def decode_image(im_file, im_info):
     """read rgb image
@@ -113,3 +119,62 @@ def argsparser():
         help="post process thre.")
 
     return parser
+
+def crop_image_with_det(batch_input, det_res, thresh=0.3):
+    boxes = det_res['boxes']
+    score = det_res['boxes'][:, 1]
+    boxes_num = det_res['boxes_num']
+    start_idx = 0
+    crop_res, new_bboxes, ori_bboxes = [], [], []
+    for b_id, input in enumerate(batch_input):
+        boxes_num_i = boxes_num[b_id]
+        if boxes_num_i == 0:
+            continue
+        boxes_i = boxes[start_idx:start_idx + boxes_num_i, :]
+        score_i = score[start_idx:start_idx + boxes_num_i]
+        res, res_nex_box, res_ori_box = [],[],[]
+        for box, s in zip(boxes_i, score_i):
+            if s > thresh:
+                crop_image, new_box, ori_box = expand_crop(input, box)
+                if crop_image is not None:
+                    res.append(crop_image)
+                    res_nex_box.append(new_box)
+                    res_ori_box.append(ori_box)
+        crop_res.append(res)
+        new_bboxes.append(res_nex_box)
+        ori_bboxes.append(res_ori_box)
+        start_idx += boxes_num_i
+    return crop_res, new_bboxes, ori_bboxes
+
+
+def visualize_image( im_files, images, output_dir, det_res, kpt_res):
+    start_idx, boxes_num_i = 0, 0
+
+    for i, (im_file, im) in enumerate(zip(im_files, images)):
+        if det_res is not None:
+            det_res_i = {}
+            boxes_num_i = det_res['boxes_num'][i]
+
+
+
+        if kpt_res is not None:
+            kpt_res_i = {}
+            kpt_res_i['keypoint'] = [ kpt_res['keypoint'][0][start_idx:start_idx + boxes_num_i, :, :],
+                                      kpt_res['keypoint'][1][start_idx:start_idx + boxes_num_i, :]
+                                    ]
+            kpt_res_i['bbox'] = kpt_res['bbox'][start_idx:start_idx + boxes_num_i, :]
+
+            im = visualize_pose(
+                im,
+                kpt_res_i,
+                visual_thresh=0.5,
+                returnimg=True)
+
+        start_idx += boxes_num_i
+
+        img_name = os.path.split(im_file)[-1]
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        out_path = os.path.join(output_dir, img_name)
+        cv2.imwrite(out_path, im)
+        print("save result to: " + out_path)

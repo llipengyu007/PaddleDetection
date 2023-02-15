@@ -5,8 +5,8 @@ import paddle
 
 
 import cv2
-from PP_DET_Interface.Interface_utils import argsparser, decode_image
-from deploy.Rhossolas_Interface.python.infer import Detector
+from Interface_utils import argsparser, decode_image
+from python.infer import Detector
 
 if __name__ == '__main__':
     video = '/Users/lipengyu/Downloads/bad_case/tmp/video/1.avi'
