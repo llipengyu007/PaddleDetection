@@ -15,11 +15,11 @@ if __name__ == '__main__':
                        '/Users/lipengyu/Downloads/bad_case/tmp_2/528dc29fdac8730001b940c4.png']
     # image = './test_img/Image_20221229141402.png'
     # image_deepcopy = './test_img/3e28e4af45765b0001d7a817.png'
-    repeat = 1
+    repeat = 3
     visualize = True
     output_dir = '/Users/lipengyu/Downloads/bad_case/tmp_2/outttt'
 
-    assert repeat==1 or visualize==False
+    #assert repeat==1 or visualize==False
 
     paddle.enable_static()
 
@@ -65,8 +65,8 @@ if __name__ == '__main__':
 
     # standard process start
 
-    start = time.time()
-
+    cost_det, cost_kpt, cost_vis = 0, 0, 0 #param for speed statistics
+    num_det, num_kpt, num_vis = 0, 0, 0 #param for speed statistics
     #batch_input = [decode_image(f, {})[0] for f in batch_file]
     for i in range(repeat):
         for image_path in image_path_list:
@@ -75,26 +75,42 @@ if __name__ == '__main__':
 
             # image = [decode_image(f, {})[0] for f in image_path_list] # example coe for batch is more than 1
 
+            start = time.time()
             # image processing and Det model inference
             det_res = det_predictor.predict_image(image, visual=False) #visualize is not support in this interface
             # post process for NMS
             det_res = det_predictor.filter_box(det_res,
                                             FLAGS.crop_thresh)
+            cost_det += time.time() - start
+            num_det += 1
 
+            start = time.time()
             # image Croping
             crop_inputs, new_bboxes, ori_bboxes = crop_image_with_det(image, det_res)
+            # image processing and KPY model inference
 
             kpt_res = kpt_predictor.predict_batch_image(crop_inputs, new_bboxes, ori_bboxes, visual=False) #visualize is not support in this interface
+            cost_kpt += time.time() - start
+            num_kpt += len(kpt_res['bbox'])
 
+            # shape of skeleton is [skeleton number, key point number, key point location]
+            # key point location == x, y, conf_for_loc
+            print('shape of skeleton: {}'.format(kpt_res['keypoint'][0].shape))
+            print('shape of confidence score of the skeleton: {}'.format(kpt_res['keypoint'][1].shape))
 
             if visualize:
+                start = time.time()
                 visualize_image([image_path], image, output_dir, det_res, kpt_res)
                 # visualize_image(image_path_list, image, output_dir, det_res, kpt_res) # example coe for batch is more than 1
+                cost_vis = time.time() - start
+                num_vis += int(det_res['boxes_num'])
 
 
 
-
-
+    print('repeat num: {}, imag_num:{}, bbox num: {}'.format(repeat, num_det,num_kpt))
+    print('det cost: {:.4f}'.format(cost_det / num_det))
+    print('kpt cost: {:.4f}'.format(cost_kpt / num_kpt))
+    print('vis cost: {:.4f}'.format(cost_vis / num_vis))
 
 
     '''
