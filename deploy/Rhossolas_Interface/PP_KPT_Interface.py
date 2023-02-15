@@ -12,7 +12,8 @@ from python.keypoint_postprocess import translate_to_ori_images
 if __name__ == '__main__':
 
     print(paddle.__version__)
-    image_path = '/Users/lipengyu/Downloads/bad_case/tmp_2/42632f59dac8730001b940a8.png'
+    image_path_list = ['/Users/lipengyu/Downloads/bad_case/tmp_2/42632f59dac8730001b940a8.png',
+                       '/Users/lipengyu/Downloads/bad_case/tmp_2/528dc29fdac8730001b940c4.png']
     # image = './test_img/Image_20221229141402.png'
     # image_deepcopy = './test_img/3e28e4af45765b0001d7a817.png'
     repeat = 1
@@ -38,8 +39,8 @@ if __name__ == '__main__':
 
     #initialization Det
     det_model_dir = '/Users/lipengyu/.cache/paddle/infer_weights/mot_ppyoloe_l_36e_pipeline'
-    #model_dir = './mot_ppyoloe_l_36e_pipeline'
-
+    # model_dir = './mot_ppyoloe_l_36e_pipeline'
+    # FLAGS.batch_size = len(image_path_list) # example coe for batch is more than 1
     det_predictor = Detector(
         det_model_dir, FLAGS.device, FLAGS.run_mode, FLAGS.batch_size,
         FLAGS.trt_min_shape, FLAGS.trt_max_shape, FLAGS.trt_opt_shape,
@@ -63,43 +64,51 @@ if __name__ == '__main__':
         use_dark=False)
 
     # standard process start
+
     start = time.time()
-    image = [decode_image(image_path, {})[0]]
+
     #batch_input = [decode_image(f, {})[0] for f in batch_file]
     for i in range(repeat):
-        # image processing and Det model inference
-        det_res = det_predictor.predict_image(image, visual=False) #visualize is not support in this interface
-        # post process for NMS
-        det_res = det_predictor.filter_box(det_res,
-                                        FLAGS.crop_thresh)
+        for image_path in image_path_list:
+            # loading image
+            image = [decode_image(image_path, {})[0]]
 
-        # image Croping
-        crop_inputs, new_bboxes, ori_bboxes = crop_image_with_det(image, det_res)
+            # image = [decode_image(f, {})[0] for f in image_path_list] # example coe for batch is more than 1
 
-        # Achieve KPT per bbox
-        kpt_res = {'keypoint': [], 'bbox': []}
-        for crop_input, new_bboxes_per_img, ori_bboxes_per_img in zip(crop_inputs, new_bboxes, ori_bboxes):
-            # KPT model infernece
-            kpt_pred = kpt_predictor.predict_image(
-                crop_input, visual=False)
-            # postprocess, remapping the location from cropping image to original image
-            keypoint_vector, score_vector = translate_to_ori_images(
-                kpt_pred, np.array(new_bboxes_per_img))
+            # image processing and Det model inference
+            det_res = det_predictor.predict_image(image, visual=False) #visualize is not support in this interface
+            # post process for NMS
+            det_res = det_predictor.filter_box(det_res,
+                                            FLAGS.crop_thresh)
 
-            # postprocess, rearrange result
-            if len(kpt_res['keypoint']) == 0:
-                kpt_res['keypoint'] = [keypoint_vector, score_vector]
-                kpt_res['bbox'] = np.array(ori_bboxes_per_img)
-            else:
-                kpt_res['keypoint'][0] = np.concatenate((kpt_res['keypoint'][0], keypoint_vector)
-                                                             , axis=0)
-                kpt_res['keypoint'][1] = np.concatenate((kpt_res['keypoint'][1], score_vector)
-                                                             , axis=0)
-                kpt_res['bbox'] = np.concatenate((kpt_res['bbox'], ori_bboxes_per_img)
-                                                      , axis=0)
+            # image Croping
+            crop_inputs, new_bboxes, ori_bboxes = crop_image_with_det(image, det_res)
 
-            if visualize:
-                visualize_image([image_path], image, output_dir, det_res, kpt_res)
+            # Achieve KPT per bbox
+            kpt_res = {'keypoint': [], 'bbox': []}
+            for crop_input, new_bboxes_per_img, ori_bboxes_per_img in zip(crop_inputs, new_bboxes, ori_bboxes):
+                # KPT model infernece
+                kpt_pred = kpt_predictor.predict_image(
+                    crop_input, visual=False)
+                # postprocess, remapping the location from cropping image to original image
+                keypoint_vector, score_vector = translate_to_ori_images(
+                    kpt_pred, np.array(new_bboxes_per_img))
+
+                # postprocess, rearrange result
+                if len(kpt_res['keypoint']) == 0:
+                    kpt_res['keypoint'] = [keypoint_vector, score_vector]
+                    kpt_res['bbox'] = np.array(ori_bboxes_per_img)
+                else:
+                    kpt_res['keypoint'][0] = np.concatenate((kpt_res['keypoint'][0], keypoint_vector)
+                                                                 , axis=0)
+                    kpt_res['keypoint'][1] = np.concatenate((kpt_res['keypoint'][1], score_vector)
+                                                                 , axis=0)
+                    kpt_res['bbox'] = np.concatenate((kpt_res['bbox'], ori_bboxes_per_img)
+                                                          , axis=0)
+
+                if visualize:
+                    visualize_image([image_path], image, output_dir, det_res, kpt_res)
+                    # visualize_image(image_path_list, image, output_dir, det_res, kpt_res) # example coe for batch is more than 1
 
 
 
