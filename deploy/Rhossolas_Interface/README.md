@@ -3,8 +3,14 @@
 - PP_DET_Interface: 主要针对PaddlePaddle的人类检测开发，应该对车辆等其他检测也是可以通过更换模型和配置文件更新（暂未测试）
   - Interface_utils.py: 一些简单的依赖额外函数。主要为：1. 清晰展示读图过程的decode_image函数；2. 配置默认参数的函数
 - python文件夹:依赖包。需要导入，但是可以不看不关注。里面可能存在一些融于项没有删除，暂时不做处理
-- PP_DET_Interface.py 和 PP_DET_Interface_video.py：检测的接口，里面实现了main函数，可以参考阅读。整体接口十分简单，容易封装。一个是针对图片，另一个是视频
-
+### PP_DET_Interface.py 和 PP_DET_Interface_video.py：    
+- 主要针对PaddlePaddle的人类检测开发，应该对车辆等其他检测也是可以通过更换模型和配置文件更新（暂未测试）
+- 检测的接口，里面实现了main函数，可以参考阅读。 整体接口十分简单，容易封装。
+- 一个是针对图片，另一个是视频。 
+### PP_KPT_Interface.py:
+- 主要针对PaddlePaddle的人类骨架点检测开发，并且依赖于人体检测器
+- 检测的接口，里面实现了main函数，可以参考阅读。 整体接口十分简单，容易封装。
+- 针对图片。
 
 # 这个接口需要依赖PaddlePaddle的相关组件，请参考如下链接安装：
 
