@@ -58,37 +58,26 @@
   - 显卡：NVIDIA Corporation Device 2208 (rev a1)
   - 操作系统：Linux version 5.4.0-124-generic (buildd@lcy02-amd64-089) (gcc version 9.4.0 (Ubuntu 9.4.0-1ubuntu1~20.04.1)) #140-Ubuntu SMP Thu Aug 4 02:23:37 UTC 2022
 - 测试结果（忽略读图IO时间）：
-  - run_mode = 测试使用前向类型
-    - det/img： 检测一张图片平均耗时
-    - kpt/bbox： 检测一个人的骨架点平均耗时
-    - vis/bbox： 可视化一个人的平均时间。除了包括框的绘制和骨骼关键点的绘制这些关键时间外，还包含了类似图像读取，拷贝等其他时间项目，时间上可以优化的点很多
-  - run_mode=CPU: 
-    - det/img：2070ms
-    - kpt/bbox：320.5ms  
-    - vis/bbox：18.2ms
-  - run_mode=paddle: 
-    - det/img：50.2ms
-    - kpt/bbox：28.9ms  
-    - vis/bbox：20.1ms
-  - run_mode=trt_fp32: 
-    - det/img：16.1ms
-    - kpt/bbox：6.6ms  
-    - vis/bbox：20ms
-  - run_mode=trt_fp16: 
-    - det/img：9.8ms
-    - kpt/bbox：3.4ms  
-    - vis/bbox：22.6ms
-  - run_mode=trt_int8: 不支持
-    - det/img：
-    - kpt/bbox：  
-    - vis/bbox：
+  - run_mode: 测试使用前向类型
+  - det/img： 检测一张图片平均耗时
+  - kpt/bbox： 检测一个人的骨架点平均耗时
+  - vis/bbox： 可视化一个人的平均时间。下面数据仅仅包括框的绘制和骨骼关键点的绘制。 （注意：在visualize_image中包含了读图和存图的操作，测试的时候记得关闭这两项）
+  
+  | run_mode | det / img | kpt / bbox | vis / bbox |
+  |-----------|------------|------------|-----------|
+  | CPU      | 2070ms    | 320.5ms    | 18.2ms     |
+  | paddle   | 50.2ms    | 28.9ms     | 19.1ms     |
+  | trf_fp32 | 16.1ms    | 6.6ms      | 19.6ms     |
+  | trf_fp16 | 9.8ms     | 3.4ms      | 19.3ms     |
+  | trf_int8 |           | 不支持        ||
+
 
 # 注意事项
 - 本代码中的detector类会使用类似于handler一类的东西将input图片缓存进去，然后在用缓存的东西进行前向。所以当多路并发而公用一个detector的对象的时候会存在input串流的情况。如果要多路并发，建议每一路单独建立一个detector或者通过batch size进行分发。
 - 在新建detector的如果直接init比较慢，可以考虑使用paddle.clone(XXXX)的形式
 
 # 跟新说明
--
-- 20230214： 重新组织文件格式，除了python依赖包之外，每个单独接口依赖的文件全部放到了根目录的Interface_utils.py下面
+- 20230215: 增加了关于KPT的接口
+- 20230214：重新组织文件格式，除了python依赖包之外，每个单独接口依赖的文件全部放到了根目录的Interface_utils.py下面
 - 新增代码支持对于Detector类的deepcopy过程。但是要求paddlepaddle版本大于2.4.0
 
