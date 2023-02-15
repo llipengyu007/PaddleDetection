@@ -15,7 +15,7 @@ if __name__ == '__main__':
                        '/Users/lipengyu/Downloads/bad_case/tmp_2/528dc29fdac8730001b940c4.png']
     # image = './test_img/Image_20221229141402.png'
     # image_deepcopy = './test_img/3e28e4af45765b0001d7a817.png'
-    repeat = 3
+    repeat = 1
     visualize = True
     output_dir = '/Users/lipengyu/Downloads/bad_case/tmp_2/outttt'
 
@@ -100,9 +100,10 @@ if __name__ == '__main__':
 
             if visualize:
                 start = time.time()
-                visualize_image([image_path], image, output_dir, det_res, kpt_res)
+                # visualize_image([image_path], image, output_dir, det_res, kpt_res)
+                visualize_image(image, image, output_dir, det_res, kpt_res)
                 # visualize_image(image_path_list, image, output_dir, det_res, kpt_res) # example coe for batch is more than 1
-                cost_vis = time.time() - start
+                cost_vis += time.time() - start
                 num_vis += int(det_res['boxes_num'])
 
 

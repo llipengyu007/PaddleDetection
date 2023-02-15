@@ -232,6 +232,7 @@ def visualize_pose(imgfile,
                    save_dir='output',
                    returnimg=False,
                    ids=None):
+    '''
     try:
         import matplotlib.pyplot as plt
         import matplotlib
@@ -240,6 +241,7 @@ def visualize_pose(imgfile,
         print('Matplotlib not found, please install matplotlib.'
               'for example: `pip install matplotlib`.')
         raise e
+    '''
     skeletons, scores = results['keypoint']
     skeletons = np.array(skeletons)
     kpt_nums = 17
@@ -258,8 +260,8 @@ def visualize_pose(imgfile,
     colors = [[255, 0, 0], [255, 85, 0], [255, 170, 0], [255, 255, 0], [170, 255, 0], [85, 255, 0], [0, 255, 0], \
             [0, 255, 85], [0, 255, 170], [0, 255, 255], [0, 170, 255], [0, 85, 255], [0, 0, 255], [85, 0, 255], \
             [170, 0, 255], [255, 0, 255], [255, 0, 170], [255, 0, 85]]
-    cmap = matplotlib.cm.get_cmap('hsv')
-    plt.figure()
+    # cmap = matplotlib.cm.get_cmap('hsv')
+    # plt.figure()
 
     img = cv2.imread(imgfile) if type(imgfile) == str else imgfile
 
@@ -273,7 +275,8 @@ def visualize_pose(imgfile,
                                                                len(colors)]
             cv2.rectangle(img, (xmin, ymin), (xmax, ymax), color, 1)
 
-    canvas = img.copy()
+    # canvas = img.copy()
+    canvas = img
     for i in range(kpt_nums):
         for j in range(len(skeletons)):
             if skeletons[j][i, 2] < visual_thresh:
@@ -292,8 +295,8 @@ def visualize_pose(imgfile,
                 color,
                 thickness=-1)
 
-    to_plot = cv2.addWeighted(img, 0.3, canvas, 0.7, 0)
-    fig = matplotlib.pyplot.gcf()
+    # to_plot = cv2.addWeighted(img, 0.3, canvas, 0.7, 0)
+    # fig = matplotlib.pyplot.gcf()
 
     stickwidth = 2
 
@@ -324,11 +327,13 @@ def visualize_pose(imgfile,
             canvas = cv2.addWeighted(canvas, 0.4, cur_canvas, 0.6, 0)
     if returnimg:
         return canvas
+    '''
     save_name = os.path.join(
         save_dir, os.path.splitext(os.path.basename(imgfile))[0] + '_vis.jpg')
     plt.imsave(save_name, canvas[:, :, ::-1])
     print("keypoint visualize image saved to: " + save_name)
     plt.close()
+    '''
 
 
 def visualize_attr(im, results, boxes=None, is_mtmct=False):

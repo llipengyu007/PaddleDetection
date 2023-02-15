@@ -6,6 +6,7 @@ import os
 
 import cv2
 import numpy as np
+import random
 import yaml
 import ast
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
@@ -152,10 +153,8 @@ def visualize_image( im_files, images, output_dir, det_res, kpt_res):
 
     for i, (im_file, im) in enumerate(zip(im_files, images)):
         if det_res is not None:
-            det_res_i = {}
+            #det_res_i = {}
             boxes_num_i = det_res['boxes_num'][i]
-
-
 
         if kpt_res is not None:
             kpt_res_i = {}
@@ -172,7 +171,9 @@ def visualize_image( im_files, images, output_dir, det_res, kpt_res):
 
         start_idx += boxes_num_i
 
+        im_file = im_file if type(im_file) == str else './'+str(random.randint(0,1000))+'.jpg'
         img_name = os.path.split(im_file)[-1]
+        # img_name = str(boxes_num_i)+'.jpg'
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         out_path = os.path.join(output_dir, img_name)
