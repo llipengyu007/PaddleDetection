@@ -307,7 +307,17 @@ def visualize_pose(imgfile,
                     1], 2] < visual_thresh:
                 continue
 
-            cur_canvas = canvas.copy()
+            if ids is None:
+                color = colors[i] if color_set is None else colors[color_set[j]
+                                                                   %
+                                                                   len(colors)]
+            X = [skeletons[j][edge[0], 1], skeletons[j][edge[1], 1]]
+            Y = [skeletons[j][edge[0], 0], skeletons[j][edge[1], 0]]
+            cv2.line(canvas, (int(Y[0]), int(X[0])), (int(Y[1]), int(X[1])), color, stickwidth)
+            '''
+            #cur_canvas = canvas.copy()
+            cur_canvas = canvas
+           
             X = [skeletons[j][edge[0], 1], skeletons[j][edge[1], 1]]
             Y = [skeletons[j][edge[0], 0], skeletons[j][edge[1], 0]]
             mX = np.mean(X)
@@ -325,6 +335,9 @@ def visualize_pose(imgfile,
                 color = get_color(ids[j])
             cv2.fillConvexPoly(cur_canvas, polygon, color)
             canvas = cv2.addWeighted(canvas, 0.4, cur_canvas, 0.6, 0)
+            
+            '''
+
     if returnimg:
         return canvas
     '''

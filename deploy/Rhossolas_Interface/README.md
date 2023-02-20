@@ -65,10 +65,10 @@
   
   | run_mode | det / img | kpt / bbox | vis / bbox |
   |-----------|------------|------------|-----------|
-  | CPU      | 2070ms    | 320.5ms    | 18.2ms     |
-  | paddle   | 50.2ms    | 28.9ms     | 19.1ms     |
-  | trf_fp32 | 16.1ms    | 6.6ms      | 19.6ms     |
-  | trf_fp16 | 9.8ms     | 3.4ms      | 19.3ms     |
+  | CPU      | 2070ms    | 320.5ms    | 0.3ms      |
+  | paddle   | 50.2ms    | 28.9ms     | 0.4ms      |
+  | trf_fp32 | 16.1ms    | 6.6ms      | 0.5ms      |
+  | trf_fp16 | 9.8ms     | 3.4ms      | 0.3ms      |
   | trf_int8 |           | 不支持        ||
 
 
