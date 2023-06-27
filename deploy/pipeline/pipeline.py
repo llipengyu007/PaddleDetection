@@ -434,9 +434,14 @@ class PipePredictor(object):
                 self.skeleton_action_visual_helper = ActionVisualHelper(
                     display_frames)
 
+                self.kpt_buff = KeyPointBuff(skeleton_action_frames)
+
+
+            if self.with_skeleton_action or self.with_kpt_predictor:
                 kpt_cfg = self.cfg['KPT']
                 kpt_model_dir = kpt_cfg['model_dir']
                 kpt_batch_size = kpt_cfg['batch_size']
+
                 self.kpt_predictor = KeyPointDetector(
                     kpt_model_dir,
                     args.device,
@@ -449,7 +454,7 @@ class PipePredictor(object):
                     args.cpu_threads,
                     args.enable_mkldnn,
                     use_dark=False)
-                self.kpt_buff = KeyPointBuff(skeleton_action_frames)
+
 
             if self.with_vehicleplate:
                 vehicleplate_cfg = self.cfg['VEHICLE_PLATE']
@@ -853,7 +858,7 @@ class PipePredictor(object):
                     if self.cfg['visual']:
                         self.cls_action_visual_helper.update(cls_action_res)
 
-                if self.with_skeleton_action:
+                if self.with_skeleton_action or self.with_kpt_predictor:
                     if frame_id > self.warmup_frame:
                         self.pipe_timer.module_time['kpt'].start()
                     kpt_pred = self.kpt_predictor.predict_image(
@@ -870,6 +875,7 @@ class PipePredictor(object):
 
                     self.pipeline_res.update(kpt_res, 'kpt')
 
+                if self.with_skeleton_action:
                     self.kpt_buff.update(kpt_res, mot_res)  # collect kpt output
                     state = self.kpt_buff.get_state(
                     )  # whether frame num is enough or lost tracker
